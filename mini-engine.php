@@ -107,9 +107,14 @@ class MiniEngine
                 throw new Exception("DATABASE_URL is not set.");
             }
 
-            $url = parse_url($url);
-            $dsn = "{$url['scheme']}:host={$url['host']};port={$url['port']};dbname=" . ltrim($url['path'], '/');
-            self::$db = new PDO($dsn, $url['user'], $url['pass']);
+            if (strpos($url, 'sqlite:') === 0) {
+                $dsn = $url;
+                self::$db = new PDO($dsn);
+            } else {
+                $url = parse_url($url);
+                $dsn = "{$url['scheme']}:host={$url['host']};port={$url['port']};dbname=" . ltrim($url['path'], '/');
+                self::$db = new PDO($dsn, $url['user'], $url['pass']);
+            }
             self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return self::$db;
@@ -126,7 +131,7 @@ class MiniEngine
             if (!array_key_exists($matches[0], $params)) {
                 throw new Exception("Parameter not found: {$matches[0]}");
             }
-            if ('pgsql' == $driver) {
+            if (in_array($driver, ['pgsql', 'sqlite'])) {
                 return '"' . $params[$matches[0]] . '"';
             } elseif ('mysql' == $driver) {
                 return '`' . $params[$matches[0]] . '`';
