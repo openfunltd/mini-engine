@@ -141,7 +141,14 @@ class MiniEngine
         }, $sql);
         $stmt = self::getDb()->prepare($sql);
         self::log($sql, $copy_params);
-        $stmt->execute($copy_params);
+        try {
+            $stmt->execute($copy_params);
+        } catch (PDOException $e) {
+            if ($e->getCode() == 23505) {
+                throw new MiniEngine_Table_DuplicateException($e->getMessage());
+            }
+            throw $e;
+        }
         return $stmt;
     }
 
@@ -721,14 +728,7 @@ class MiniEngine_Table
         }
 
         $sql = "INSERT INTO ::table (" . implode(', ', $col_terms) . ") VALUES " . implode(', ', $insert_terms);
-        try {
-            $stmt = MiniEngine::dbExecute($sql, $params);
-        } catch (PDOException $e) {
-            if ($e->getCode() == 23505) {
-                throw new MiniEngine_Table_DuplicateException($e->getMessage());
-            }
-            throw $e;
-        }
+        $stmt = MiniEngine::dbExecute($sql, $params);
         unset(self::$_bulk_insert_data[$table_name]);
     }
 
