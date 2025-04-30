@@ -828,6 +828,9 @@ class MiniEngine_Table
                 if (array_key_exists('default', $config)) {
                     $col_def .= " DEFAULT " . self::quote($config['default'], $col);
                 }
+                if ($config['primary'] ?? false) {
+                    $col_def .= " PRIMARY KEY";
+                }
                 $cols[] = $col_def;
                 $params["::col{$col}"] = $col;
             } elseif ($config['type'] == 'varchar') {
