@@ -763,7 +763,11 @@ class MiniEngine_Table
             }
             throw $e;
         }
-        $insert_id = MiniEngine::getDb()->lastInsertId();
+        try {
+            $insert_id = MiniEngine::getDb()->lastInsertId();
+        } catch (Exception $e) {
+            $insert_id = $data[$table->getPrimaryKeys()[0]] ?? null;
+        }
         if (!$insert_id) {
             throw new Exception("Unable to get last insert id.");
         }
