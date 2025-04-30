@@ -817,6 +817,7 @@ class MiniEngine_Table
                 'bool', 'boolean',
                 'text',
                 'jsonb',
+                'uuid',
                 'geometry',
             ])) {
                 $type = strtolower($config['type']);
