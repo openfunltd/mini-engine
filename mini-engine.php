@@ -831,6 +831,12 @@ class MiniEngine_Table
                 if ($config['primary'] ?? false) {
                     $col_def .= " PRIMARY KEY";
                 }
+                if ('geometry' == $config['type']) {
+                    if ($config['srid'] ?? false) {
+                        $col_def = "::col{$col} GEOMETRY(GEOMETRY, ::srid{$col})";
+                        $params["::srid{$col}"] = intval($config['srid']);
+                    }
+                }
                 $cols[] = $col_def;
                 $params["::col{$col}"] = $col;
             } elseif ($config['type'] == 'varchar') {
