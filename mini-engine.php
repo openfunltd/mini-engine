@@ -280,13 +280,13 @@ class MiniEngine
         }
 
         $controller_instance = new $controller_class();
-        $action_method = $action . 'Action';
-        if (!method_exists($controller_instance, $action_method)) {
-            return self::runControllerAction('error', 'error', [new MiniEngine_Controller_NotFound("Action not found: {$controller}:{$action}")]);
-        }
 
         try {
             call_user_func_array([$controller_instance, 'init'], $params);
+            $action_method = $action . 'Action';
+            if (!method_exists($controller_instance, $action_method)) {
+                throw new MiniEngine_Controller_NotFound("Action not found: {$controller}:{$action}");
+            }
             call_user_func_array([$controller_instance, $action_method], $params);
             $view_file = self::getRoot() . '/views/' . $controller . '/' . $action . '.php';
             echo $controller_instance->draw($view_file);
