@@ -866,6 +866,9 @@ class MiniEngine_Table
 
                 if (array_key_exists('unique', $config) and $config['unique']) {
                     $sql = "CREATE UNIQUE INDEX ::index_name ON ::table (" . implode(', ', $index_cols) . ")";
+                } elseif (array_key_exists('primary', $config) and $config['primary']) {
+                    $sql = "ALTER TABLE ::table ADD PRIMARY KEY (" . implode(', ', $index_cols) . ")";
+                    unset($params['::index_name']);
                 } else {
                     $sql = "CREATE INDEX ::index_name ON ::table (" . implode(', ', $index_cols) . ")";
                 }
