@@ -839,8 +839,8 @@ class MiniEngine_Table
                 }
                 $cols[] = $col_def;
                 $params["::col{$col}"] = $col;
-            } elseif ($config['type'] == 'varchar') {
-                $cols[] = "::col_{$col} VARCHAR(" . ($config['length'] ?? 255) . ")";
+            } elseif (in_array($config['type'], ['varchar', 'char'])) {
+                $cols[] = "::col_{$col} " . strtoupper($config['type']) . "(" . ($config['length'] ?? 255) . ")";
                 $params["::col_{$col}"] = $col;
             } else {
                 throw new Exception("Unsupported column type: {$config['type']}");
