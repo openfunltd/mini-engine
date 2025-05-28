@@ -819,12 +819,16 @@ class MiniEngine_Table
                 'jsonb',
                 'uuid',
                 'geometry',
+                'varchar', 'char',
             ])) {
                 $type = strtolower($config['type']);
                 if (array_key_exists($type, $alias)) {
                     $type = $alias[$type];
                 }
                 $col_def = "::col{$col} " . strtoupper($type);
+                if (in_array($type, ['varchar', 'char']) and array_key_exists('length', $config)) {
+                    $col_def .= "(" . intval($config['length']) . ")";
+                }
                 if (array_key_exists('default', $config)) {
                     $col_def .= " DEFAULT " . self::quote($config['default'], $col);
                 }
@@ -839,9 +843,6 @@ class MiniEngine_Table
                 }
                 $cols[] = $col_def;
                 $params["::col{$col}"] = $col;
-            } elseif (in_array($config['type'], ['varchar', 'char'])) {
-                $cols[] = "::col_{$col} " . strtoupper($config['type']) . "(" . ($config['length'] ?? 255) . ")";
-                $params["::col_{$col}"] = $col;
             } else {
                 throw new Exception("Unsupported column type: {$config['type']}");
             }
