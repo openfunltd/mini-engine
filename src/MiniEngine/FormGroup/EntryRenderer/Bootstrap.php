@@ -73,6 +73,12 @@ class MiniEngine_FormGroup_EntryRenderer_Bootstrap
         <?php if ($entry->options['required'] ?? false) { ?>
         required
         <?php } ?>
+
+        <?php foreach (['min', 'max', 'step'] as $attr) { ?>
+          <?php if (isset($entry->options[$attr])) { ?>
+            <?= htmlspecialchars($attr) ?>="<?= htmlspecialchars($entry->options[$attr]) ?>"
+          <?php } ?>
+        <?php } ?>
         value="<?= htmlspecialchars($entry->getEntryValue()) ?>"
         />
 <?php
