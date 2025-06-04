@@ -539,6 +539,7 @@ class MiniEngine_Table
     protected $_name = null;
     protected $_primary_keys = null;
     protected $_columns = null;
+    protected $_hooks = [];
     protected $_indexes = null;
     protected $_relations = null;
     protected $_table = null;
@@ -885,6 +886,10 @@ class MiniEngine_Table
                 }
                 MiniEngine::dbExecute($sql, $params);
             }
+        }
+
+        if ($table->_hooks['post_create'] ?? false) {
+            $table->_hooks['post_create']($table);
         }
     }
 
