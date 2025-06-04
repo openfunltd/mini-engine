@@ -94,14 +94,29 @@ class MiniEngine_FormGroup
     public static function searchData($input_data, $k)
     {
         if (strpos($k, '.') === false) {
-            return $input_data[$k] ?? null;
+            if (is_array($input_data)) {
+                return $input_data[$k] ?? null;
+            } elseif (is_object($input_data)) {
+                return $input_data->$k ?? null;
+            }
         }
 
         $keys = explode('.', $k);
-        if (!($input_data[$keys[0]] ?? false)) {
-            return null;
+        if (is_array($input_data)) {
+            if (!($input_data[$keys[0]] ?? false)) {
+                return null;
+            }
+        } elseif (is_object($input_data)) {
+            if (!($input_data->{$keys[0]} ?? false)) {
+                return null;
+            }
         }
-        return self::searchData($input_data[$keys[0]], implode('.', array_slice($keys, 1)));
+
+        if (is_array($input_data[$keys[0]])) {
+            return self::searchData($input_data[$keys[0]], implode('.', array_slice($keys, 1)));
+        } elseif (is_object($input_data[$keys[0]])) {
+            return self::searchData((array)$input_data[$keys[0]], implode('.', array_slice($keys, 1)));
+        }
     }
 
     public static function checkData($input_data, &$errors = null)
