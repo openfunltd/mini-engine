@@ -32,7 +32,7 @@ class MiniEngine_FormGroup_EntryRenderer_Bootstrap
     {
         ob_start();
 ?>
-<div class="form-group">
+<div class="mb-3 <?= $entry->hasError() ? 'has-validation' : '' ?>">
     <?php if ($entry->options['label'] ?? false) { ?>
     <label for="<?= htmlspecialchars(self::getEntryKey($entry)) ?>"><?= htmlspecialchars($entry->options['label']) ?>
         <?php if ($entry->options['required'] ?? false) { ?>
@@ -127,9 +127,11 @@ class MiniEngine_FormGroup_EntryRenderer_Bootstrap
     public static function renderRadio($entry)
     {
         ob_start();
+        $final_option = strval(array_key_last($entry->options['options']));
         echo self::renderStart($entry);
 ?>
 <?php foreach ($entry->options['options'] as $value => $label) { ?>
+<?php $value = strval($value); // Ensure value is a string ?>
 <div class="form-check">
     <input type="radio"
         name="<?= htmlspecialchars($entry->options['input_name'] ?? $entry->name) ?>"
@@ -141,6 +143,11 @@ class MiniEngine_FormGroup_EntryRenderer_Bootstrap
     <label class="form-check-label" for="<?= htmlspecialchars(self::getEntryKey($entry) . '_' . $value) ?>">
         <?= htmlspecialchars($label) ?>
     </label>
+    <?php if ($entry->hasError() and $final_option === $value) { ?>
+    <div class="invalid-feedback">
+        <?= htmlspecialchars($entry->group->getEntryError($entry->name)) ?>
+    </div>
+    <?php } ?>
 </div>
 <?php } ?>
 <?php
