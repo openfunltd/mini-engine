@@ -5,7 +5,11 @@ class MiniEngine_FormGroup_EntryRenderer_Bootstrap
     public static function render($entry)
     {
         $type = $entry->options['type'] ?? 'text';
-        if (in_array($type, ['text', 'password', 'email', 'url', 'number'])) {
+        if (in_array($type, [
+            'text', 'password',
+            'email', 'url', 'number',
+            'datetime-local', 'date', 'time',
+        ])) {
             return self::renderText($type, $entry);
         } elseif ('textarea' == $type) {
             return self::renderTextarea($entry);
