@@ -88,6 +88,7 @@ class MiniEngine_FormGroup
         if ($entry->options['default'] ?? false) {
             return $entry->options['default'];
         }
+        return null;
     }
 
     public static function searchData($input_data, $k)

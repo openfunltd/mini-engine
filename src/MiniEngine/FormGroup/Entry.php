@@ -31,7 +31,7 @@ class MiniEngine_FormGroup_Entry
     public function check($value)
     {
         if ($this->options['required'] ?? false) {
-            if (empty($value)) {
+            if (is_null($value)) {
                 throw new Exception("Field {$this->name} is required");
             }
         }

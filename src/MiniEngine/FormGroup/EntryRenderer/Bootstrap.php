@@ -136,7 +136,7 @@ class MiniEngine_FormGroup_EntryRenderer_Bootstrap
         id="<?= htmlspecialchars(self::getEntryKey($entry) . '_' . $value) ?>"
         value="<?= htmlspecialchars($value) ?>"
         class="form-check-input <?= $entry->hasError() ? 'is-invalid' : '' ?>"
-        <?php if ($value == $entry->getEntryValue()) { ?> checked <?php } ?>
+        <?php if ($value === $entry->getEntryValue()) { ?> checked <?php } ?>
     />
     <label class="form-check-label" for="<?= htmlspecialchars(self::getEntryKey($entry) . '_' . $value) ?>">
         <?= htmlspecialchars($label) ?>
