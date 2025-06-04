@@ -296,7 +296,7 @@ class MiniEngine
             }
             call_user_func_array([$controller_instance, $action_method], $params);
             $view_file = self::getRoot() . '/views/' . $controller . '/' . $action . '.php';
-            echo $controller_instance->draw($view_file);
+            $controller_instance->draw($view_file);
         } catch (MiniEngine_Controller_NoView $e) {
             // do nothing
         } catch (Exception $e) {
@@ -415,12 +415,16 @@ class MiniEngine_Controller_ViewObject
     {
         if ($data instanceof MiniEngine_Controller_ViewObject) {
             $data = $data->_data;
-        } else {
+        } else if (!is_null($data)) {
             $data = (array) $data;
         }
 
-        $original_data = $this->_data;
-        $this->_data = $data;
+        if (!is_null($data)) {
+            $original_data = $this->_data;
+            $this->_data = $data;
+        } else {
+            $original_data = null;
+        }
 
         if (!file_exists($file)) {
             if (file_exists(MiniEngine::getRoot() . "/views/{$file}.php")) {
@@ -434,7 +438,9 @@ class MiniEngine_Controller_ViewObject
         include($file);
         $content = ob_get_clean();
 
-        $this->_data = $original_data;
+        if (!is_null($original_data)) {
+            $this->_data = $original_data;
+        }
         return $content;
     }
 
@@ -459,10 +465,14 @@ class MiniEngine_Controller
 
     public function draw($view_file)
     {
-        if (!file_exists($view_file)) {
+        if (file_exists($view_file)) {
+        } elseif (file_exists(MiniEngine::getRoot() . "/views/{$view_file}.php")) {
+            $view_file = MiniEngine::getRoot() . "/views/{$view_file}.php";
+        } else {
             throw new Exception("View file not found: $view_file");
         }
-        return $this->view->partial($view_file, $this->view);
+        echo $this->view->partial($view_file, $this->view);
+        exit;
     }
 
     public function json($data)
