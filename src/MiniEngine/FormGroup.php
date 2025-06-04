@@ -80,7 +80,14 @@ class MiniEngine_FormGroup
         if (!($group->_entries[$name] ?? false)) {
             throw new Exception("Entry {$name} not found in group");
         }
-        return self::searchData($group->_data, $name);
+        $ret = self::searchData($group->_data, $name);
+        if (!is_null($ret)) {
+            return $ret;
+        }
+        $entry = $group->_entries[$name];
+        if ($entry->options['default'] ?? false) {
+            return $entry->options['default'];
+        }
     }
 
     public static function searchData($input_data, $k)
