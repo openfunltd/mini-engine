@@ -127,10 +127,10 @@ class MiniEngine
         // handle ::table, ::cols to escape table and column names
         $sql = preg_replace_callback('/::[a-z_0-9A-Z]+/', function($matches) use ($db, $params, &$copy_params) {
             $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
-            unset($copy_params[$matches[0]]);
             if (!array_key_exists($matches[0], $params)) {
-                throw new Exception("Parameter not found: {$matches[0]}");
+                return $matches[0]; // leave it as is if not found
             }
+            unset($copy_params[$matches[0]]);
             if (in_array($driver, ['pgsql', 'sqlite'])) {
                 return '"' . $params[$matches[0]] . '"';
             } elseif ('mysql' == $driver) {
