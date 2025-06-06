@@ -352,6 +352,11 @@ class MiniEngine
 
         return $response;
     }
+
+    public static function getView()
+    {
+        return new MiniEngine_Controller_ViewObject();
+    }
 }
 
 class MiniEngine_Controller_NoView extends Exception
