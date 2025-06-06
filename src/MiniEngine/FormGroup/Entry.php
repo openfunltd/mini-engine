@@ -11,6 +11,7 @@ class MiniEngine_FormGroup_Entry
         $this->group = $group;
         $this->name = $name;
         $this->options = $options;
+        $this->options['type'] = $this->options['type'] ?? 'text';
     }
 
     public function __toString()
