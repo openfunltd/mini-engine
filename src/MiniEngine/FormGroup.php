@@ -110,6 +110,10 @@ class MiniEngine_FormGroup
             if (!($input_data->{$keys[0]} ?? false)) {
                 return null;
             }
+        } elseif (is_null($input_data)) {
+            return null;
+        } else {
+            throw new Exception("Input data must be an array or object, " . gettype($input_data) . " given");
         }
 
         if (is_array($input_data[$keys[0]])) {
