@@ -85,7 +85,7 @@ class MiniEngine_FormGroup
             return $ret;
         }
         $entry = $group->_entries[$name];
-        if ($entry->options['default'] ?? false) {
+        if (array_key_exists('default', $entry->options)) {
             return $entry->options['default'];
         }
         return null;
