@@ -42,4 +42,12 @@ class MiniEngine_FormGroup_Entry
         }
         return $value;
     }
+
+    public function getOption($v)
+    {
+        if (!($this->options['options'] ?? false)) {
+            return null;
+        }
+        return $this->options['options'][$v] ?? null;
+    }
 }
