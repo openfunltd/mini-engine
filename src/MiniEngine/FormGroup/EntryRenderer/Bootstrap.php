@@ -32,14 +32,17 @@ class MiniEngine_FormGroup_EntryRenderer_Bootstrap
     {
         ob_start();
 ?>
-<div class="mb-3 <?= $entry->hasError() ? 'has-validation' : '' ?>">
+<div class="mb-3 row <?= $entry->hasError() ? 'has-validation' : '' ?>">
     <?php if ($entry->options['label'] ?? false) { ?>
+    <div class="col-auto">
     <label for="<?= htmlspecialchars(self::getEntryKey($entry)) ?>"><?= htmlspecialchars($entry->options['label']) ?>
         <?php if ($entry->options['required'] ?? false) { ?>
         <span class="text-danger">*</span>
         <?php } ?>
     </label>
+    </div>
     <?php } ?>
+    <div class="col-auto">
 <?php
         return ob_get_clean();
     }
@@ -48,6 +51,7 @@ class MiniEngine_FormGroup_EntryRenderer_Bootstrap
     {
         ob_start();
 ?>
+    </div>
     <?php if ($entry->hasError()) { ?>
     <div class="invalid-feedback">
     <?= htmlspecialchars($entry->group->getEntryError($entry->name)) ?>
