@@ -174,15 +174,12 @@ class MiniEngine
     {
         $message = $error->getMessage();
         $trace = $error->getTrace();
-        $file = $trace[0]['file'];
-        $line = $trace[0]['line'];
+        $file = $error->getFile();
+        $line = $error->getLine();
         $trace = array_map(function($idx) use ($trace){
             $level = $idx + 1;
             return "#{$level} {$trace[$idx]['file']}:{$trace[$idx]['line']}";
         }, array_keys($trace));
-        $trace = array_merge([
-            "#0 $file:$line"
-        ], $trace);
 
         if ('MiniEngine_Controller_NotFound' != get_class($error)) {
             error_log("Error: $message in $file:$line\nStack trace:\n" . implode("\n", $trace));
