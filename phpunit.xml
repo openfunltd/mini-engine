@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         beStrictAboutOutputDuringTests="true"
+         failOnRisky="true"
+         failOnWarning="true">
+    <php>
+        <env name="DB_HOST" value="localhost"/>
+        <env name="DB_PORT" value="5432"/>
+        <env name="DB_NAME" value="mini_engine_test"/>
+        <env name="DB_USER" value="mini_engine"/>
+        <env name="DB_PASSWORD" value="mini_engine_pass"/>
+        <env name="DB_DRIVER" value="pgsql"/>
+    </php>
+    <testsuites>
+        <testsuite name="Mini Engine Test Suite">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <file>mini-engine.php</file>
+            <directory suffix=".php">src</directory>
+        </include>
+    </source>
+</phpunit>
