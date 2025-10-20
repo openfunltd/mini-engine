@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mini-engine-postgres
+    environment:
+      POSTGRES_DB: mini_engine_test
+      POSTGRES_USER: mini_engine
+      POSTGRES_PASSWORD: mini_engine_pass
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "65432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mini_engine -d mini_engine_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mini-engine-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  mini-engine-network:
+    driver: bridge
