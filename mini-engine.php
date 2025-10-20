@@ -1103,7 +1103,8 @@ class MiniEngine_Table_Rowset implements Countable, SeekableIterator
             }
 
             if (is_scalar($search)) {
-                return $search;
+                $terms[] = $search;
+                continue;
             }
 
             throw new Exception("Unsupported search query." . json_encode($search));
