@@ -374,7 +374,7 @@ class MiniEngine_Db
                 throw new Exception("Unsupported database driver: $driver");
             }
         }, $sql);
-        $stmt = $this->db->prepare($sql);
+        $stmt = $db->prepare($sql);
         $this->log($sql, $copy_params);
         try {
             $stmt->execute($copy_params);
