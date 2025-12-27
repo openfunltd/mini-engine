@@ -106,7 +106,7 @@ class MiniEngine
         self::$db_urls[$db_group] = $url;
     }
 
-    public static function getDb($db_group = 'default')
+    public static function getDb($db_group = 'default', $return_type = 'PDO')
     {
         if ($db_group == 'default') {
             $url = getenv('DATABASE_URL');
@@ -123,18 +123,21 @@ class MiniEngine
         if (is_null(self::$dbs[$db_group] ?? null)) {
             self::$dbs[$db_group] = new MiniEngine_Db($url);
         }
+        if ($return_type == 'PDO') {
+            return self::$dbs[$db_group]->getPDO();
+        }
         return self::$dbs[$db_group];
     }
 
     public static function dbExecute($sql, $params = [])
     {
-        $db = self::getDb();
+        $db = self::getDb('default', 'MiniEngine_Db');
         return $db->dbExecute($sql, $params);
     }
 
     public static function log($sql, $params)
     {
-        $db = self::getDb();
+        $db = self::getDb('default', 'MiniEngine_Db');
         $db->log($sql, $params);
     }
 
@@ -333,6 +336,11 @@ class MiniEngine
 class MiniEngine_Db
 {
     protected $db;
+
+    public function getPDO()
+    {
+        return $this->db;
+    }
 
     public function __construct($url)
     {
@@ -604,7 +612,7 @@ class MiniEngine_Table
 
     public function getDb()
     {
-        return MiniEngine::getDb($this->_db_group);
+        return MiniEngine::getDb($this->_db_group, 'MiniEngine_Db');
     }
 
     public static function quote($value, $col = null)
@@ -821,7 +829,7 @@ class MiniEngine_Table
             throw $e;
         }
         try {
-            $insert_id = $table->getDb()->lastInsertId();
+            $insert_id = $table->getDb()->getPDO()->lastInsertId();
         } catch (Exception $e) {
             $insert_id = $data[$table->getPrimaryKeys()[0]] ?? null;
         }
