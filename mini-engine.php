@@ -335,33 +335,33 @@ class MiniEngine
 
 class MiniEngine_Db
 {
-    protected $db;
+    protected $pdo;
 
     public function getPDO()
     {
-        return $this->db;
+        return $this->pdo;
     }
 
     public function __construct($url)
     {
         if (strpos($url, 'sqlite:') === 0) {
             $dsn = $url;
-            $this->db = new PDO($dsn);
+            $this->pdo = new PDO($dsn);
         } else {
             $url = parse_url($url);
             $dsn = "{$url['scheme']}:host={$url['host']};port={$url['port']};dbname=" . ltrim($url['path'], '/');
-            $this->db = new PDO($dsn, $url['user'], $url['pass']);
+            $this->pdo = new PDO($dsn, $url['user'], $url['pass']);
         }
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
     public function dbExecute($sql, $params = [])
     {
-        $db = $this->db;
+        $pdo = $this->pdo;
         $copy_params = $params;
         // handle ::table, ::cols to escape table and column names
-        $sql = preg_replace_callback('/::[a-z_0-9A-Z]+/', function($matches) use ($db, $params, &$copy_params) {
-            $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $sql = preg_replace_callback('/::[a-z_0-9A-Z]+/', function($matches) use ($pdo, $params, &$copy_params) {
+            $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
             if (!array_key_exists($matches[0], $params)) {
                 return $matches[0]; // leave it as is if not found
             }
@@ -374,7 +374,7 @@ class MiniEngine_Db
                 throw new Exception("Unsupported database driver: $driver");
             }
         }, $sql);
-        $stmt = $db->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $this->log($sql, $copy_params);
         try {
             $stmt->execute($copy_params);
@@ -392,7 +392,6 @@ class MiniEngine_Db
         if (getenv('ENV') == 'production') {
             return;
         }
-        $db = $this->db;
 
         // firt 100 and last 100 characters
         if (strlen($sql) > 200) {
@@ -619,9 +618,9 @@ class MiniEngine_Table
     {
         $table = self::getTableClass();
         $table_columns = $table->getTableColumns();
-        $db = $table->getDb();
+        $pdo = $table->getDb()->getPDO();
         if (is_null($col)) {
-            return $db->quote($value);
+            return $pdo->quote($value);
         }
         if (!array_key_exists($col, $table_columns)) {
             throw new Exception("Column not found: $col");
@@ -631,11 +630,11 @@ class MiniEngine_Table
         } elseif (in_array($table_columns[$col]['type'], ['bool', 'boolean'])) {
             return $value ? 'TRUE' : 'FALSE';
         } elseif ($table_columns[$col]['type'] == 'jsonb') {
-            return $db->quote(json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            return $pdo->quote(json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         } elseif ($table_columns[$col]['type'] == 'geometry') {
-            return "ST_GeomFromGeoJSON(" . $db->quote(json_encode($value)) . ")";
+            return "ST_GeomFromGeoJSON(" . $pdo->quote(json_encode($value)) . ")";
         }
-        return $db->quote($value);
+        return $pdo->quote($value);
     }
 
     protected static $_debug = 0;
