@@ -98,70 +98,44 @@ class MiniEngine
         return self::$session_data->{$key} ?? null;
     }
 
-    protected static $db = null;
-    public static function getDb()
+    protected static $dbs = null;
+    protected static $db_urls = [];
+
+    public static function setDbURL($db_group, $url)
     {
-        if (is_null(self::$db)) {
+        self::$db_urls[$db_group] = $url;
+    }
+
+    public static function getDb($db_group = 'default')
+    {
+        if ($db_group == 'default') {
             $url = getenv('DATABASE_URL');
             if (!$url) {
                 throw new Exception("DATABASE_URL is not set.");
             }
-
-            if (strpos($url, 'sqlite:') === 0) {
-                $dsn = $url;
-                self::$db = new PDO($dsn);
-            } else {
-                $url = parse_url($url);
-                $dsn = "{$url['scheme']}:host={$url['host']};port={$url['port']};dbname=" . ltrim($url['path'], '/');
-                self::$db = new PDO($dsn, $url['user'], $url['pass']);
+        } else {
+            $url = self::$db_urls[$db_group] ?? null;
+            if (is_null($url)) {
+                throw new Exception("Database URL for group '{$db_group}' is not set.");
             }
-            self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
-        return self::$db;
+
+        if (is_null(self::$dbs[$db_group] ?? null)) {
+            self::$dbs[$db_group] = new MiniEngine_Db($url);
+        }
+        return self::$dbs[$db_group];
     }
 
     public static function dbExecute($sql, $params = [])
     {
         $db = self::getDb();
-        $copy_params = $params;
-        // handle ::table, ::cols to escape table and column names
-        $sql = preg_replace_callback('/::[a-z_0-9A-Z]+/', function($matches) use ($db, $params, &$copy_params) {
-            $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
-            if (!array_key_exists($matches[0], $params)) {
-                return $matches[0]; // leave it as is if not found
-            }
-            unset($copy_params[$matches[0]]);
-            if (in_array($driver, ['pgsql', 'sqlite'])) {
-                return '"' . $params[$matches[0]] . '"';
-            } elseif ('mysql' == $driver) {
-                return '`' . $params[$matches[0]] . '`';
-            } else {
-                throw new Exception("Unsupported database driver: $driver");
-            }
-        }, $sql);
-        $stmt = self::getDb()->prepare($sql);
-        self::log($sql, $copy_params);
-        try {
-            $stmt->execute($copy_params);
-        } catch (PDOException $e) {
-            if ($e->getCode() == 23505) {
-                throw new MiniEngine_Table_DuplicateException($e->getMessage());
-            }
-            throw $e;
-        }
-        return $stmt;
+        return $db->dbExecute($sql, $params);
     }
 
     public static function log($sql, $params)
     {
-        if (getenv('ENV') == 'production') {
-            return;
-        }
-        // firt 100 and last 100 characters
-        if (strlen($sql) > 200) {
-            $sql = substr($sql, 0, 100) . '...' . substr($sql, -100);
-        }
-        error_log("SQL: $sql, Params: " . mb_strimwidth(json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 300, '...'));
+        $db = self::getDb();
+        $db->log($sql, $params);
     }
 
     public static function initEnv()
@@ -356,6 +330,70 @@ class MiniEngine
     }
 }
 
+class MiniEngine_Db
+{
+    protected $db;
+
+    public function __construct($url)
+    {
+        if (strpos($url, 'sqlite:') === 0) {
+            $dsn = $url;
+            $this->db = new PDO($dsn);
+        } else {
+            $url = parse_url($url);
+            $dsn = "{$url['scheme']}:host={$url['host']};port={$url['port']};dbname=" . ltrim($url['path'], '/');
+            $this->db = new PDO($dsn, $url['user'], $url['pass']);
+        }
+        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
+
+    public function dbExecute($sql, $params = [])
+    {
+        $db = $this->db;
+        $copy_params = $params;
+        // handle ::table, ::cols to escape table and column names
+        $sql = preg_replace_callback('/::[a-z_0-9A-Z]+/', function($matches) use ($db, $params, &$copy_params) {
+            $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+            if (!array_key_exists($matches[0], $params)) {
+                return $matches[0]; // leave it as is if not found
+            }
+            unset($copy_params[$matches[0]]);
+            if (in_array($driver, ['pgsql', 'sqlite'])) {
+                return '"' . $params[$matches[0]] . '"';
+            } elseif ('mysql' == $driver) {
+                return '`' . $params[$matches[0]] . '`';
+            } else {
+                throw new Exception("Unsupported database driver: $driver");
+            }
+        }, $sql);
+        $stmt = $this->db->prepare($sql);
+        $this->log($sql, $copy_params);
+        try {
+            $stmt->execute($copy_params);
+        } catch (PDOException $e) {
+            if ($e->getCode() == 23505) {
+                throw new MiniEngine_Table_DuplicateException($e->getMessage());
+            }
+            throw $e;
+        }
+        return $stmt;
+    }
+
+    public function log($sql, $params)
+    {
+        if (getenv('ENV') == 'production') {
+            return;
+        }
+        $db = $this->db;
+
+        // firt 100 and last 100 characters
+        if (strlen($sql) > 200) {
+            $sql = substr($sql, 0, 100) . '...' . substr($sql, -100);
+        }
+        error_log("SQL: $sql, Params: " . mb_strimwidth(json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 300, '...'));
+    }
+}
+
 class MiniEngine_Controller_NoView extends Exception
 {
 }
@@ -545,6 +583,7 @@ class MiniEngine_Table
     protected $_indexes = null;
     protected $_relations = null;
     protected $_table = null;
+    protected $_db_group = 'default';
 
     public function init()
     {
@@ -563,11 +602,16 @@ class MiniEngine_Table
         }
     }
 
+    public function getDb()
+    {
+        return MiniEngine::getDb($this->_db_group);
+    }
+
     public static function quote($value, $col = null)
     {
         $table = self::getTableClass();
         $table_columns = $table->getTableColumns();
-        $db = MiniEngine::getDb();
+        $db = $table->getDb();
         if (is_null($col)) {
             return $db->quote($value);
         }
@@ -741,7 +785,7 @@ class MiniEngine_Table
         }
 
         $sql = "INSERT INTO ::table (" . implode(', ', $col_terms) . ") VALUES " . implode(', ', $insert_terms);
-        $stmt = MiniEngine::dbExecute($sql, $params);
+        $stmt = $this->getDb()->dbExecute($sql, $params);
         unset(self::$_bulk_insert_data[$table_name]);
     }
 
@@ -769,7 +813,7 @@ class MiniEngine_Table
         }
         $sql = "INSERT INTO ::table (" . implode(', ', $cols) . ") VALUES (" . implode(', ', $vals) . ")";
         try {
-            $stmt = MiniEngine::dbExecute($sql, $params);
+            $stmt = $table->getDb()->dbExecute($sql, $params);
         } catch (PDOException $e) {
             if ($e->getCode() == 23505) {
                 throw new MiniEngine_Table_DuplicateException($e->getMessage());
@@ -777,7 +821,7 @@ class MiniEngine_Table
             throw $e;
         }
         try {
-            $insert_id = MiniEngine::getDb()->lastInsertId();
+            $insert_id = $table->getDb()->lastInsertId();
         } catch (Exception $e) {
             $insert_id = $data[$table->getPrimaryKeys()[0]] ?? null;
         }
@@ -861,7 +905,7 @@ class MiniEngine_Table
             }
         }
         $sql = "CREATE TABLE ::table (" . implode(', ', $cols) . ")";
-        MiniEngine::dbExecute($sql, $params);
+        $table->getDb()->dbExecute($sql, $params);
 
         if (is_array($table->_indexes) and count($table->_indexes)) {
             foreach ($table->_indexes as $index_name => $config) {
@@ -886,7 +930,7 @@ class MiniEngine_Table
                 } else {
                     $sql = "CREATE INDEX ::index_name ON ::table (" . implode(', ', $index_cols) . ")";
                 }
-                MiniEngine::dbExecute($sql, $params);
+                $table->getDb()->dbExecute($sql, $params);
             }
         }
 
@@ -941,7 +985,7 @@ class MiniEngine_Table_Row
             $params[":id_val_{$idx}"] = $this->_data[$key];
         }
         $sql = "DELETE FROM ::table WHERE " . implode(' AND ', $terms);
-        MiniEngine::dbExecute($sql, $params);
+        $table->getDb()->dbExecute($sql, $params);
     }
 
     public function update($data)
@@ -1025,7 +1069,7 @@ class MiniEngine_Table_Row
             $params[":id_val_{$idx}"] = $this->_origin_data[$key];
         }
         $sql = "UPDATE ::table SET " . implode(', ', $update_terms) . " WHERE " . implode(' AND ', $where_terms);
-        MiniEngine::dbExecute($sql, $params);
+        $this->_table->getDb()->dbExecute($sql, $params);
         $this->_origin_data = $this->_data;
     }
 }
@@ -1121,7 +1165,7 @@ class MiniEngine_Table_Rowset implements Countable, SeekableIterator
             '::table' => $this->_table->getTableName(),
         ];
         $sql = "SELECT COUNT(*) AS count FROM ::table WHERE " . $this->getSearchQuery($params);
-        $stmt = MiniEngine::dbExecute($sql, $params);
+        $stmt = $this->_table->getDb()->dbExecute($sql, $params);
         return $stmt->fetchColumn();
     }
 
@@ -1205,7 +1249,7 @@ class MiniEngine_Table_Rowset implements Countable, SeekableIterator
             $sql .= " OFFSET :offset";
             $params[':offset'] = $this->_offset;
         }
-        $stmt = MiniEngine::dbExecute($sql, $params);
+        $stmt = $this->_table->getDb()->dbExecute($sql, $params);
         $this->_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $table_columns = $this->_table->getTableColumns();
         $this->_data = array_map(function($row) use ($table_columns) {
