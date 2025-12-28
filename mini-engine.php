@@ -1147,12 +1147,32 @@ class MiniEngine_Table_Rowset implements Countable, SeekableIterator
                             $search_params[] = "1 = 0"; // false
                             continue;
                         }
-                        foreach ($v as $idx => $val) {
-                            $search_params[] = ":val_{$k}_{$idx}";
-                            $params[":val_{$k}_{$idx}"] = $val;
+                        if (strpos($k, ',')) {
+                            $ks = explode(',', $k);
+                            $col_terms = [];
+                            foreach ($ks as $ks_idx => $k) {
+                                $col_terms[] = "::col_{$k}";
+                                $params["::col_{$k}"] = $k;
+                            }
+
+                            foreach ($v as $idx => $val) {
+                                $val_terms = [];
+                                foreach ($ks as $ks_idx => $k) {
+                                    $val_terms[] = ":val_{$k}_{$idx}_{$ks_idx}";
+                                    $params[":val_{$k}_{$idx}_{$ks_idx}"] = $val[$ks_idx];
+                                }
+                                $search_params[] = "(" . implode(', ', $val_terms) . ")";
+                            }
+                            $terms[] = "(" . implode(', ', $col_terms) . ") IN (" . implode(', ', $search_params) . ")";
+
+                        } else {
+                            foreach ($v as $idx => $val) {
+                                $search_params[] = ":val_{$k}_{$idx}";
+                                $params[":val_{$k}_{$idx}"] = $val;
+                            }
+                            $terms[] = "::col_{$k} IN (" . implode(', ', $search_params) . ")";
+                            $params["::col_{$k}"] = $k;
                         }
-                        $terms[] = "::col_{$k} IN (" . implode(', ', $search_params) . ")";
-                        $params["::col_{$k}"] = $k;
                     } else {
                         $terms[] = "::col_{$k} = :val_{$k}";
                         $params["::col_{$k}"] = $k;
