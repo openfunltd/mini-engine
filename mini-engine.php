@@ -374,8 +374,8 @@ class MiniEngine_Db
                 throw new Exception("Unsupported database driver: $driver");
             }
         }, $sql);
-        $stmt = $pdo->prepare($sql);
         $this->log($sql, $copy_params);
+        $stmt = $pdo->prepare($sql);
         try {
             $stmt->execute($copy_params);
         } catch (PDOException $e) {
