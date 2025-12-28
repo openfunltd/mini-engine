@@ -865,6 +865,7 @@ class MiniEngine_Table
             '::table' => $table->getTableName(),
         ];
         $cols = [];
+        $has_primary = false;
         foreach ($table->_columns as $col => $config) {
             if (!array_key_exists('type', $config)) {
                 throw new Exception("Type not defined for column: $col");
@@ -897,6 +898,7 @@ class MiniEngine_Table
                     $col_def .= " DEFAULT " . self::quote($config['default'], $col);
                 }
                 if ($config['primary'] ?? false) {
+                    $has_primary = true;
                     $col_def .= " PRIMARY KEY";
                 }
                 if ('geometry' == $config['type']) {
@@ -910,6 +912,16 @@ class MiniEngine_Table
             } else {
                 throw new Exception("Unsupported column type: {$config['type']}");
             }
+        }
+
+        if (!$has_primary) { // add primary key if not defined
+            $primary_keys = $table->getPrimaryKeys();
+            $pk_cols = [];
+            foreach ($primary_keys as $pk_col) {
+                $pk_cols[] = "::col_pk_{$pk_col}";
+                $params["::col_pk_{$pk_col}"] = $pk_col;
+            }
+            $cols[] = "PRIMARY KEY (" . implode(', ', $pk_cols) . ")";
         }
         $sql = "CREATE TABLE ::table (" . implode(', ', $cols) . ")";
         $table->getDb()->dbExecute($sql, $params);
