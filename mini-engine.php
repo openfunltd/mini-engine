@@ -792,7 +792,7 @@ class MiniEngine_Table
         }
 
         $sql = "INSERT INTO ::table (" . implode(', ', $col_terms) . ") VALUES " . implode(', ', $insert_terms);
-        $stmt = $this->getDb()->dbExecute($sql, $params);
+        $stmt = $table->getDb()->dbExecute($sql, $params);
         unset(self::$_bulk_insert_data[$table_name]);
     }
 
