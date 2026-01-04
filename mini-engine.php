@@ -614,9 +614,10 @@ class MiniEngine_Table
         }
     }
 
-    public function getDb()
+    public static function getDb()
     {
-        return MiniEngine::getDb($this->_db_group, 'MiniEngine_Db');
+        $table = self::getTableClass();
+        return MiniEngine::getDb($table->_db_group, 'MiniEngine_Db');
     }
 
     public static function quote($value, $col = null)
