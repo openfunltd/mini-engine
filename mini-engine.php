@@ -349,6 +349,11 @@ class MiniEngine_Db
             $this->pdo = new PDO($dsn);
         } else {
             $url = parse_url($url);
+            $url['port'] = $url['port'] ?? (
+                ($url['scheme'] == 'mysql') ? 3306 : (
+                    ($url['scheme'] == 'pgsql') ? 5432 : null
+                )
+            );
             $dsn = "{$url['scheme']}:host={$url['host']};port={$url['port']};dbname=" . ltrim($url['path'], '/');
             $this->pdo = new PDO($dsn, $url['user'], $url['pass']);
         }
