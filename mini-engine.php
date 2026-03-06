@@ -638,6 +638,8 @@ class MiniEngine_Table
         }
         if (in_array($table_columns[$col]['type'], ['int', 'integer', 'bigint'])) {
             return (int) $value;
+        } elseif (in_array($table_columns[$col]['type'], ['double', 'float', 'real'])) {
+            return (float) $value;
         } elseif (in_array($table_columns[$col]['type'], ['bool', 'boolean'])) {
             return $value ? 'TRUE' : 'FALSE';
         } elseif ($table_columns[$col]['type'] == 'jsonb') {
@@ -907,6 +909,7 @@ class MiniEngine_Table
                 'serial',
                 'integer', 'int',
                 'bigint',
+                'double', 'float', 'real',
                 'bool', 'boolean',
                 'text',
                 'jsonb',
