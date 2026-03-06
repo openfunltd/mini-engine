@@ -342,6 +342,11 @@ class MiniEngine_Db
         return $this->pdo;
     }
 
+    public function getDriverName()
+    {
+        return $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    }
+
     public function __construct($url)
     {
         if (strpos($url, 'sqlite:') === 0) {
@@ -721,9 +726,13 @@ class MiniEngine_Table
 
     protected static $_bulk_insert_data = [];
 
-    public static function bulkInsert($data)
+    public static function bulkInsert($data, $options = null)
     {
         $table = self::getTableClass();
+        $bulk_count = 1000;
+        if (is_array($options) and ($options['bulk_count'] ?? null)) {
+            $bulk_count = intval($options['bulk_count']);
+        }
         $table_name = get_class($table);
         if (!array_key_exists($table_name, self::$_bulk_insert_data)) {
             self::$_bulk_insert_data[$table_name] = [
@@ -742,12 +751,12 @@ class MiniEngine_Table
             $record[$idx] = $value;
         }
         self::$_bulk_insert_data[$table_name]['records'][] = $record;
-        if (count(self::$_bulk_insert_data[$table_name]['records']) >= 1000) {
-            self::bulkCommit($table_name);
+        if (count(self::$_bulk_insert_data[$table_name]['records']) >= $bulk_count) {
+            self::bulkCommit($table_name, $options);
         }
     }
 
-    public static function bulkCommit($table_name = null)
+    public static function bulkCommit($table_name = null, $options = null)
     {
         if (is_null($table_name)) {
             foreach (array_keys(self::$_bulk_insert_data) as $table_name) {
@@ -798,6 +807,19 @@ class MiniEngine_Table
         }
 
         $sql = "INSERT INTO ::table (" . implode(', ', $col_terms) . ") VALUES " . implode(', ', $insert_terms);
+        $db = $table->getDb();
+        $driver = $db->getDriverName();
+        if (is_array($options) and ($options['ignore'] ?? false)) {
+            if ('sqlite' == $driver) {
+                $sql = str_replace('INSERT INTO', 'INSERT OR IGNORE INTO', $sql);
+            } elseif ('mysql' == $driver) {
+                $sql = str_replace('INSERT INTO', 'INSERT IGNORE INTO', $sql);
+            } elseif ('pgsql' == $driver) {
+                $sql .= " ON CONFLICT DO NOTHING";
+            } else {
+                throw new Exception("Unsupported database driver: $driver");
+            }
+        }
         $stmt = $table->getDb()->dbExecute($sql, $params);
         unset(self::$_bulk_insert_data[$table_name]);
     }
