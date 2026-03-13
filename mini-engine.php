@@ -731,11 +731,11 @@ class MiniEngine_Table
     public static function bulkInsert($data, $options = null)
     {
         $table = self::getTableClass();
-        $bulk_count = 1000;
+        $table_name = get_class($table);
+        $bulk_count = 500;
         if (is_array($options) and ($options['bulk_count'] ?? null)) {
             $bulk_count = intval($options['bulk_count']);
         }
-        $table_name = get_class($table);
         if (!array_key_exists($table_name, self::$_bulk_insert_data)) {
             self::$_bulk_insert_data[$table_name] = [
                 'table' => $table,
@@ -754,19 +754,14 @@ class MiniEngine_Table
         }
         self::$_bulk_insert_data[$table_name]['records'][] = $record;
         if (count(self::$_bulk_insert_data[$table_name]['records']) >= $bulk_count) {
-            self::bulkCommit($table_name, $options);
+            $table->bulkCommit($options);
         }
     }
 
-    public static function bulkCommit($table_name = null, $options = null)
+    public static function bulkCommit($options = null)
     {
-        if (is_null($table_name)) {
-            foreach (array_keys(self::$_bulk_insert_data) as $table_name) {
-                self::bulkCommit($table_name);
-            }
-            return;
-        }
-
+        $table = self::getTableClass();
+        $table_name = get_class($table);
         if (!array_key_exists($table_name, self::$_bulk_insert_data)) {
             return;
         }
