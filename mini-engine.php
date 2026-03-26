@@ -1030,7 +1030,7 @@ class MiniEngine_Table_Row
             $params[":id_val_{$idx}"] = $this->_data[$key];
         }
         $sql = "DELETE FROM ::table WHERE " . implode(' AND ', $terms);
-        $table->getDb()->dbExecute($sql, $params);
+        $this->_table->getDb()->dbExecute($sql, $params);
     }
 
     public function update($data)
