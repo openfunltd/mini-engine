@@ -219,8 +219,9 @@ class MiniEngine
     public static function dispatch($custom_function = null)
     {
         try {
-            if (strpos($_SERVER['REQUEST_URI'], '/static') === 0) {
-                $file = self::getRoot() . $_SERVER['REQUEST_URI'];
+            $request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
+            if (strpos($request_path, '/static') === 0) {
+                $file = self::getRoot() . $request_path;
                 if (file_exists($file) and is_file($file)) {
                     header('Content-Type: ' . mime_content_type($file));
                     readfile($file);
