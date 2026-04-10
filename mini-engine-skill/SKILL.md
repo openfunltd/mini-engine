@@ -2,6 +2,9 @@
 name: mini-engine-skill
 description: Mini Engine PHP MVC 框架的 conventions 與開發指引。當專案有 mini-engine.php、init.inc.php，或程式碼中使用 MiniEngine、MiniEngine_Table、MiniEngine_Controller 時自動載入。
 user-invocable: false
+metadata:
+  author: openfunltd
+  version: 0.1
 ---
 
 # Mini Engine 開發指引
