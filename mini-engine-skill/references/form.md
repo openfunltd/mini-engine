@@ -52,6 +52,12 @@ public function editAction($id)
 </form>
 ```
 
+## FormGroup 安裝
+
+FormGroup 相關檔案目前尚未內建於 mini-engine.php，需從 GitHub repository 下載 `src/MiniEngine/FormGroup.php` 及 `src/MiniEngine/FormGroup/` 目錄下的所有檔案，放到專案的 `libraries/` 目錄中，維持相同的目錄結構。
+
+來源位置：https://github.com/openfunltd/mini-engine/tree/main/src/MiniEngine （FormGroup.php 及 FormGroup/ 目錄）
+
 ## FormGroup 定義
 
 FormGroup 放在 `libraries/` 或 `forms/` 目錄（需加入 `set_include_path`）。
